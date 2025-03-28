@@ -220,6 +220,54 @@ app.delete('/api/leads/:id', async (req, res) => {
   }
 });
 
-//comments
-
 //tags
+app.post('/api/tags', async (req, res) => {
+  const { name } = req.body;
+  try {
+    const newTag = new Tag({ name });
+    await newTag.save();
+    res.status(201).json(newTag);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/tags', async (req, res) => {
+  try {
+    const allTags = await Tag.find();
+    res.status(200).json(allTags);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//comments
+app.post('/api/leads/:id/comments', async (req, res) => {
+  const lead = req.params.id;
+  const { author, commentText } = req.body;
+  console.log(lead, author, commentText);
+  try {
+    const leadId = await Lead.findOne({ _id: lead });
+    console.log('lead id find: ', leadId);
+
+    if (leadId) {
+      const newComment = new Comment({ lead, author, commentText });
+      await newComment.save();
+      res.status(201).json(newComment);
+    } else {
+      res.status(404).json({ error: `Lead with ID ${lead} not found.` });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/leads/:id/comments', async (req, res) => {
+  try {
+    const lead = req.params.id;
+    const allComments = await Comment.find({ lead }).populate('author');
+    res.status(200).json(allComments);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
