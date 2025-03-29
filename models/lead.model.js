@@ -30,7 +30,9 @@ const leadSchema = new mongoose.Schema({
     default: 'New',
   },
   tags: {
-    type: [String], // Array of strings for tags (e.g., High Value, Follow-up)
+    // type: [String], // Array of strings for tags (e.g., High Value, Follow-up)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tag', // Reference to Tag model
   },
   timeToClose: {
     type: Number,
