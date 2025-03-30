@@ -271,3 +271,87 @@ app.get('/api/leads/:id/comments', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+//reporting
+app.get('/report/leads-by-status', async (req, res) => {
+  try {
+    const allLeads = await Lead.find();
+
+    const leadsByStatus = allLeads.reduce((acc, curr) => {
+      const status = curr.status;
+      // acc[status] = acc[status] ? acc[status] + 1 : 1;
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+    console.log(leadsByStatus);
+    res.status(200).json(leadsByStatus);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/report/pipeline', async (req, res) => {
+  try {
+    const allLeads = await Lead.find();
+
+    const leadsInPipeline = allLeads.reduce(
+      (acc, curr) => {
+        const status = curr.status;
+        if (status === 'Closed') {
+          acc.closed = acc.closed + 1;
+        } else {
+          acc.pipeline = acc.pipeline + 1;
+        }
+        return acc;
+      },
+      { pipeline: 0, closed: 0 }
+    );
+    console.log(leadsInPipeline);
+    res.status(200).json(leadsInPipeline);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/report/closed-by-agent', async (req, res) => {
+  try {
+    const allLeads = await Lead.find().populate('salesAgent');
+    // console.log(allLeads);
+
+    const leadsByAgent = allLeads.reduce((acc, curr) => {
+      const agent = curr.salesAgent.name;
+      console.log(agent, curr.status);
+
+      if (!acc[agent]) {
+        acc[agent] = 0;
+      }
+      if (curr.status === 'Closed') {
+        acc[agent] = acc[agent] + 1;
+      }
+
+      return acc;
+    }, {});
+    console.log(leadsByAgent);
+    res.status(200).json(leadsByAgent);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/report/last-week', async (req, res) => {
+  try {
+    const closedLeads = await Lead.find({ status: 'Closed' });
+
+    const sevenDaysAgoDate = new Date();
+    sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
+    console.log(sevenDaysAgoDate);
+
+    const lastWeekClosedLeads = closedLeads.filter(
+      (lead) => lead.updatedAt >= sevenDaysAgoDate
+    );
+    console.log(lastWeekClosedLeads);
+    res.status(200).json(lastWeekClosedLeads);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
