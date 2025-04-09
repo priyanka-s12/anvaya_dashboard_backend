@@ -193,6 +193,7 @@ app.put('/api/leads/:id', async (req, res) => {
     //when status is closed, update closedAt
     if (dataToUpdate.status === 'Closed') {
       dataToUpdate.closedAt = new Date();
+      dataToUpdate.timeToClose = 0;
     }
 
     const updatedLead = await Lead.findByIdAndUpdate(
