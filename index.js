@@ -190,9 +190,18 @@ app.put('/api/leads/:id', async (req, res) => {
       });
     }
 
-    const updatedLead = await Lead.findByIdAndUpdate(leadId, dataToUpdate, {
-      new: true,
-    });
+    //when status is closed, update closedAt
+    if (dataToUpdate.status === 'Closed') {
+      dataToUpdate.closedAt = new Date();
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(
+      leadId,
+      { ...dataToUpdate, updatedAt: new Date() },
+      {
+        new: true,
+      }
+    );
 
     if (!updatedLead) {
       res.status(404).json({ error: `Lead with ID ${leadId} not found.` });
@@ -341,6 +350,7 @@ app.get('/report/closed-by-agent', async (req, res) => {
 app.get('/report/last-week', async (req, res) => {
   try {
     const closedLeads = await Lead.find({ status: 'Closed' });
+    console.log(closedLeads);
 
     const sevenDaysAgoDate = new Date();
     sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
@@ -350,6 +360,7 @@ app.get('/report/last-week', async (req, res) => {
       (lead) => lead.updatedAt >= sevenDaysAgoDate
     );
     console.log(lastWeekClosedLeads);
+
     res.status(200).json(lastWeekClosedLeads);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
